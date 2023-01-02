@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33122.133
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketWrapperLibrary", "SocketWrapperLibrary\SocketWrapperLibrary.csproj", "{F987198A-3559-4098-B19A-677A6BEB19D7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketWrapperLibrary", "SocketWrapperLibrary\SocketWrapperLibrary.csproj", "{F987198A-3559-4098-B19A-677A6BEB19D7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketWrapperImplementation", "SocketWrapperImplementation\SocketWrapperImplementation.csproj", "{FACC5667-1E44-4731-9854-8CE5FA119C89}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{F987198A-3559-4098-B19A-677A6BEB19D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F987198A-3559-4098-B19A-677A6BEB19D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F987198A-3559-4098-B19A-677A6BEB19D7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FACC5667-1E44-4731-9854-8CE5FA119C89}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FACC5667-1E44-4731-9854-8CE5FA119C89}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FACC5667-1E44-4731-9854-8CE5FA119C89}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FACC5667-1E44-4731-9854-8CE5FA119C89}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
