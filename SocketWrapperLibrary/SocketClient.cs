@@ -5,7 +5,7 @@ namespace SocketWrapperLibrary
 {
     public class SocketClient
     {
-        protected Socket socket;
+        protected Socket? socket;
 
         public bool Connect(string ip, int port)
         {
@@ -19,6 +19,12 @@ namespace SocketWrapperLibrary
             } catch (Exception e)
             {
                 Console.WriteLine("ERROR (Connect): " + e.Message);
+                if (socket != null)
+                {
+                    socket.Close();
+                    socket = null;
+                }
+
                 return false;
             }
 
@@ -68,6 +74,8 @@ namespace SocketWrapperLibrary
 
         public void CloseConnection()
         {
+            if (socket == null) return;
+
             socket.Close();
         }
     }
