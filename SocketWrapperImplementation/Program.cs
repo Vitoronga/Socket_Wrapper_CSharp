@@ -40,19 +40,20 @@ namespace SocketWrapperImplementation
             Console.WriteLine("Configuring client. Type S for sender or R for receiver");
             input = Console.ReadLine();
 
-            if (input.ToUpper() == "S")
+            if (input.ToUpper().Equals("S"))
             {
                 input = "Test";
-                while (input != "Q")
+                while (input != "Q" && client.IsConnected())
                 {
-                    client.SendData(Encoding.ASCII.GetBytes(input));
+                    bool success = client.SendData(Encoding.ASCII.GetBytes(input));
+                    if (!success) Console.WriteLine("<<< Failed to send data >>>");
                     Console.Write(">>> ");
                     input = Console.ReadLine();
                 }
             }
             else
             {
-                while (true)
+                while (client.IsConnected())
                 {
                     Console.WriteLine(Encoding.ASCII.GetString(client.ReceiveData()));
                 }

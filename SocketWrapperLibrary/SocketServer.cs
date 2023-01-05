@@ -1,17 +1,18 @@
 ﻿using System.Net;
 using System.Net.Sockets;
+using System.Reflection.Metadata.Ecma335;
 
 namespace SocketWrapperLibrary
 {
     public class SocketServer
     {
         private Socket? serverSocket;
-        internal List<ClientHandler> socketConnections = new List<ClientHandler>();
+        internal List<ClientHandler> SocketConnections { get; private set; } = new List<ClientHandler>();
         private Thread? socketListenerThread;
 
         public void Start(int port)
         {
-            IPEndPoint ipEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), port);
+            IPEndPoint ipEndPoint = new IPEndPoint(IPAddress.Loopback, port);
 
             serverSocket = new Socket(ipEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             serverSocket.Bind(ipEndPoint);
@@ -22,26 +23,45 @@ namespace SocketWrapperLibrary
 
         private void SocketListenerThreadFunc()
         {
-            while (serverSocket != null && serverSocket.IsBound)
+            try
             {
-                serverSocket.Listen(0);
-                socketConnections.Add(new ClientHandler(serverSocket.Accept(), this));
+                while (serverSocket != null && serverSocket.IsBound)
+                {
+                    serverSocket.Listen(0);
+                    SocketConnections.Add(new ClientHandler(serverSocket.Accept(), this)); // This always throw an exception when closing the server window.
+                }
+            } catch (Exception e)
+            {
+                Console.WriteLine($"ERROR (SocketListenerThreadFunc): {e.Message}\n... Closing server connection.");
+            } finally
+            {
+                StopServer();
             }
+            
+        }
+
+        internal void DisconnectClient(ClientHandler client)
+        {
+            client.StopClientHandler();
+            SocketConnections.Remove(client);
         }
 
         public void DisconnectAllClients()
         {
-            foreach (ClientHandler client in socketConnections)
+            // Fixing a bug where the list is modified while foreach's running - Now it access the items directly
+            for (int i = 0; i < SocketConnections.Count; i++)
             {
-                client.StopClientHandler();
-                socketConnections.Remove(client);
+                DisconnectClient(SocketConnections[i]);
             }
+
+            SocketConnections.Clear();
         }
 
         public void StopServer()
         {
             if (serverSocket == null) return;
 
+            DisconnectAllClients();
             serverSocket.Close();
             serverSocket = null;
         }
@@ -69,12 +89,31 @@ namespace SocketWrapperLibrary
             }
         }
 
-        public void SendDataToAllClients(byte[] data)
+        public void SendDataToAllClients(byte[] data) // Not static I think
         {
+            /*
             foreach (ClientHandler client in server.socketConnections)
             {
                 if (client == this) continue;
                 client.SendData(data);
+            }
+            */
+
+            // Fixing a bug where the list is modified while foreach's running - Now it access the items directly
+            for (int i = 0; i < server.SocketConnections.Count; i++)
+            {
+                ClientHandler client = server.SocketConnections[i];
+
+                if (client == this) continue;
+                if (!client.SendData(data))
+                {
+                    Console.WriteLine("Could not 'relay' message from a client to the rest.");
+                    if (!client.IsConnected())
+                    {
+                        server.DisconnectClient(client);
+                        Console.WriteLine("Removed client for being disconnected.");
+                    }                    
+                }
             }
         }
 
@@ -82,7 +121,10 @@ namespace SocketWrapperLibrary
         {
             if (socket == null) return;
 
+            // ATTENTION: Do *NOT* call server.DisconnectClient() here. Result: Stack Overflow  O_O
+
             // Thread method will detect the abscence of a socket I think, so no handling here for now
+
             if (socket.Connected) socket.Close();
             socket = null;
         }

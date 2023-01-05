@@ -72,6 +72,8 @@ namespace SocketWrapperLibrary
             return formattedBytes;
         }
 
+        public bool IsConnected() => socket != null && socket.Connected;
+
         public void CloseConnection()
         {
             if (socket == null) return;
