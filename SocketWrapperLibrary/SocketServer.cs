@@ -1,6 +1,5 @@
 ﻿using System.Net;
 using System.Net.Sockets;
-using System.Reflection.Metadata.Ecma335;
 
 namespace SocketWrapperLibrary
 {
@@ -91,14 +90,6 @@ namespace SocketWrapperLibrary
 
         public void SendDataToAllClients(byte[] data) // Not static I think
         {
-            /*
-            foreach (ClientHandler client in server.socketConnections)
-            {
-                if (client == this) continue;
-                client.SendData(data);
-            }
-            */
-
             // Fixing a bug where the list is modified while foreach's running - Now it access the items directly
             for (int i = 0; i < server.SocketConnections.Count; i++)
             {
