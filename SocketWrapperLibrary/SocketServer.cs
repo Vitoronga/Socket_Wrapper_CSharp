@@ -39,6 +39,32 @@ namespace SocketWrapperLibrary
             
         }
 
+        public string GetClientsStatus()
+        {
+            string msgOut = $"All Clients Status ({SocketConnections.Count}):";
+
+            for (int i = 0; i < SocketConnections.Count; i++)
+            {
+                msgOut += $"\n{i}: " + SocketConnections[i].GetClientStatus();
+            }
+
+            return msgOut;
+        }
+
+        public string GetClientReportFromId(int id)
+        {
+            if (!TryFindClientHandlerFromId(id, out ClientHandler client)) return $"Couldn't find client from id {id}";
+            return client.GetClientReport();
+        }
+
+        public bool DisconnectClientById(int id)
+        {
+            if (!TryFindClientHandlerFromId(id, out ClientHandler client)) return false;
+            DisconnectClient(client);
+
+            return true;
+        }
+
         internal void DisconnectClient(ClientHandler client)
         {
             client.StopClientHandler();
@@ -56,13 +82,34 @@ namespace SocketWrapperLibrary
             SocketConnections.Clear();
         }
 
+        public bool IsServerOnline() => serverSocket != null && serverSocket.IsBound;
+
         public void StopServer()
         {
+            Console.WriteLine("Closing server..."); // For debug reasons
+
             if (serverSocket == null) return;
 
             DisconnectAllClients();
             serverSocket.Close();
             serverSocket = null;
+
+            Console.WriteLine("Closing process done."); // For debug reasons
+        }
+
+        internal bool TryFindClientHandlerFromId(int id, out ClientHandler? client)
+        {
+            for (int i = 0; i < SocketConnections.Count; i++)
+            {
+                if (SocketConnections[i].Id == id)
+                {
+                    client = SocketConnections[i];
+                    return true;
+                }
+            }
+
+            client = null; // IDE shows a warning if 'out ClientHandler' here isn't nullable
+            return false;
         }
     }
 
@@ -70,11 +117,16 @@ namespace SocketWrapperLibrary
     {
         SocketServer server;
         Thread dataReceiverThread;
+        internal static int ClientCount { get; private set; } // Useful to generate unique IDs
+        internal int Id { get; private set; }
+        internal DateTime ConnectionTime { get; private set; }
 
         public ClientHandler(Socket socket, SocketServer server)
         {
             this.socket = socket;
             this.server = server;
+            this.Id = ClientCount++;
+            ConnectionTime = DateTime.Now;
 
             dataReceiverThread = new Thread(ReceiveDataThreadFunc);
             dataReceiverThread.Start();
@@ -95,7 +147,9 @@ namespace SocketWrapperLibrary
             {
                 ClientHandler client = server.SocketConnections[i];
 
+                // Ignore self
                 if (client == this) continue;
+                
                 if (!client.SendData(data))
                 {
                     Console.WriteLine("Could not 'relay' message from a client to the rest.");
@@ -118,6 +172,31 @@ namespace SocketWrapperLibrary
 
             if (socket.Connected) socket.Close();
             socket = null;
+        }
+
+        public string GetClientStatus() // Simple status return
+        {
+            string msgOut = "Id: " + Id +
+                          "\nConnected: " + IsConnected() +
+                          "\nTime connected: " + GetTimeConnected() + "s";
+
+            return msgOut;
+        }
+
+        public string GetClientReport() // Detailed status return
+        {
+            string msgOut = GetClientStatus();
+
+            msgOut += "\nConnection Time: " + ConnectionTime;
+
+            // Increment
+
+            return msgOut;
+        }
+
+        public long GetTimeConnected()
+        {
+            return ((DateTime.Now.Ticks - ConnectionTime.Ticks) / TimeSpan.TicksPerSecond);
         }
     }
 }

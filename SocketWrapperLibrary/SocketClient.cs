@@ -47,7 +47,7 @@ namespace SocketWrapperLibrary
             return true;
         }
 
-        public byte[] ReceiveData()
+        public byte[] ReceiveData() // Maybe return bool and pass the received bytes as out parameter?
         {
             byte[] formattedBytes = new byte[0];
 
