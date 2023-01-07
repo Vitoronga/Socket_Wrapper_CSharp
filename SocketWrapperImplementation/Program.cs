@@ -76,6 +76,7 @@ namespace SocketWrapperImplementation
 
                     case "5":
                         server.DisconnectAllClients();
+                        Console.WriteLine("Disconnection process completed.");
                         break;
 
 
@@ -118,7 +119,8 @@ namespace SocketWrapperImplementation
             {
                 while (client.IsConnected())
                 {
-                    Console.WriteLine(Encoding.ASCII.GetString(client.ReceiveData()));
+                    if (!client.ReceiveData(out byte[] bytes)) continue;
+                    Console.WriteLine(Encoding.ASCII.GetString(bytes));
                 }
             }
 

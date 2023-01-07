@@ -120,6 +120,8 @@ namespace SocketWrapperLibrary
         internal static int ClientCount { get; private set; } // Useful to generate unique IDs
         internal int Id { get; private set; }
         internal DateTime ConnectionTime { get; private set; }
+        private int socketEmissionToServerCount = 0; // Socket communication tracker
+        private int socketEmissionToClientCount = 0; // Socket communication tracker
 
         public ClientHandler(Socket socket, SocketServer server)
         {
@@ -136,8 +138,20 @@ namespace SocketWrapperLibrary
         {
             while (socket != null && socket.Connected)
             {
-                SendDataToAllClients(ReceiveData()); // SendDataToAllClients could be defined as async? Something tells me this could improve performance later.
+                if (!ReceiveData(out byte[] bytes)) continue;
+                socketEmissionToServerCount++;
+                SendDataToAllClients(bytes); // SendDataToAllClients could be defined as async? Something tells me this could improve performance later.
             }
+        }
+
+        public new bool SendData(byte[] bytes) // The only difference between this and the base one is the tracker.
+        {
+            bool success = base.SendData(bytes);
+            
+            if (!success) return false;
+            
+            socketEmissionToClientCount++;
+            return true;
         }
 
         public void SendDataToAllClients(byte[] data) // Not static I think
@@ -152,7 +166,7 @@ namespace SocketWrapperLibrary
                 
                 if (!client.SendData(data))
                 {
-                    Console.WriteLine("Could not 'relay' message from a client to the rest.");
+                    Console.WriteLine("Could not 'relay' message from a client to another.");
                     if (!client.IsConnected())
                     {
                         server.DisconnectClient(client);
@@ -187,7 +201,9 @@ namespace SocketWrapperLibrary
         {
             string msgOut = GetClientStatus();
 
-            msgOut += "\nConnection Time: " + ConnectionTime;
+            msgOut += "\nConnection Time: " + ConnectionTime + 
+                      "\nEmissions (C->S): " + socketEmissionToServerCount +
+                      "\nReceptions (S->C): " + socketEmissionToClientCount;
 
             // Increment
 

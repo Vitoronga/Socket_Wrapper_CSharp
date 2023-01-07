@@ -47,11 +47,11 @@ namespace SocketWrapperLibrary
             return true;
         }
 
-        public byte[] ReceiveData() // Maybe return bool and pass the received bytes as out parameter?
+        public bool ReceiveData(out byte[] formattedBytes) // Maybe return bool and pass the received bytes as out parameter?
         {
-            byte[] formattedBytes = new byte[0];
+            formattedBytes = new byte[0];
 
-            if (socket == null) return formattedBytes;
+            if (socket == null) return false;
 
             try
             {
@@ -67,9 +67,10 @@ namespace SocketWrapperLibrary
             } catch (Exception e)
             {
                 Console.WriteLine("ERROR (ReceiveData): " + e.Message);
+                return false;
             }
 
-            return formattedBytes;
+            return true;
         }
 
         public bool IsConnected() => socket != null && socket.Connected;
