@@ -39,6 +39,14 @@ namespace SocketWrapperLibrary
             
         }
 
+        public void SendMessageAsServer(byte[] bytes)
+        {
+            for (int i = 0; i < SocketConnections.Count; i++)
+            {
+                SocketConnections[i].SendData(bytes);
+            }
+        }
+
         public string GetClientsStatus()
         {
             string msgOut = $"All Clients Status ({SocketConnections.Count}):";

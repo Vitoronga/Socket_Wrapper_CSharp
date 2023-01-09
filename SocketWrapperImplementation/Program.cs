@@ -33,6 +33,7 @@ namespace SocketWrapperImplementation
                 PrintServerMenu(server.IsServerOnline());
 
                 input = Console.ReadLine();
+                Console.WriteLine("-\t-\t-\tHandling Input...\t-\t-\t");
 
                 switch (input)
                 {
@@ -42,11 +43,18 @@ namespace SocketWrapperImplementation
 
 
                     case "2":
-                        Console.WriteLine($"Clients: {server.GetClientsStatus()}");
+                        Console.WriteLine("\nType your message: ");
+                        string msgOut = Console.ReadLine();
+                        server.SendMessageAsServer(Encoding.ASCII.GetBytes($"[SERVER]: {msgOut}"));
                         break;
 
 
                     case "3":
+                        Console.WriteLine($"Clients: {server.GetClientsStatus()}");
+                        break;
+
+
+                    case "4":
                         Console.WriteLine("Type the id of the client you want to inspect:");
                         if (!int.TryParse(Console.ReadLine(), out int id))
                         {
@@ -58,7 +66,7 @@ namespace SocketWrapperImplementation
                         break;
 
 
-                    case "4":
+                    case "5":
                         Console.WriteLine("Type the id of the client you want to kick out:");
                         if (!int.TryParse(Console.ReadLine(), out id))
                         {
@@ -74,7 +82,7 @@ namespace SocketWrapperImplementation
                         break;
 
 
-                    case "5":
+                    case "6":
                         server.DisconnectAllClients();
                         Console.WriteLine("Disconnection process completed.");
                         break;
@@ -86,7 +94,7 @@ namespace SocketWrapperImplementation
 
 
                     default:
-                        Console.WriteLine("Invalid input.");
+                        Console.WriteLine("Invalid input.\n");
                         break;
                 }
             }
@@ -99,7 +107,11 @@ namespace SocketWrapperImplementation
             string input = "";
 
             SocketClient client = new SocketClient();
-            client.Connect("127.0.0.1", 20100);
+            if (!client.Connect("127.0.0.1", 20100))
+            {
+                Console.WriteLine("Failed to connect.");
+                return;
+            }
 
             Console.WriteLine("Configuring client. Type S for sender or R for receiver");
             input = Console.ReadLine();
@@ -107,16 +119,19 @@ namespace SocketWrapperImplementation
             if (input.ToUpper().Equals("S"))
             {
                 input = "Test";
-                while (input != "Q" && client.IsConnected())
+                Console.WriteLine("Sender mode: Type your message after the '>>>', or !quit to disconnect.");
+                do
                 {
-                    bool success = client.SendData(Encoding.ASCII.GetBytes(input));
-                    if (!success) Console.WriteLine("<<< Failed to send data >>>");
                     Console.Write(">>> ");
                     input = Console.ReadLine();
-                }
+                    if (input == "!quit") break;
+                    bool success = client.SendData(Encoding.ASCII.GetBytes(input));
+                    if (!success) Console.WriteLine("<<< Failed to send data >>>");
+                } while (client.IsConnected());
             }
             else
             {
+                Console.WriteLine("Receiver mode: All incoming messages will be displayed as they come.");
                 while (client.IsConnected())
                 {
                     if (!client.ReceiveData(out byte[] bytes)) continue;
@@ -150,11 +165,12 @@ namespace SocketWrapperImplementation
             // ----- Menu Items -----
 
             msgOut += "\n1. Start Server" +
-                      "\n2. Show clients" +
-                      "\n3. Get Client Report" +
-                      "\n4. Kick client" +
-                      "\n5. Kick all clients (WIP)" +
-                      "\n10. Close server and quit. (WIP)";
+                      "\n2. Send Message to Clients" +
+                      "\n3. Show clients" +
+                      "\n4. Get Client Report" +
+                      "\n5. Kick client" +
+                      "\n6. Kick all clients" +
+                      "\n10. Close server and quit.";
             Console.WriteLine(msgOut);
         }
 
