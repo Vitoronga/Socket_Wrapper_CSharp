@@ -162,7 +162,7 @@ namespace SocketWrapperLibrary
             return true;
         }
 
-        public void SendDataToAllClients(byte[] data) // Not static I think
+        public void SendDataToAllClients(byte[] data)
         {
             // Fixing a bug where the list is modified while foreach's running - Now it access the items directly
             for (int i = 0; i < server.SocketConnections.Count; i++)
@@ -212,8 +212,6 @@ namespace SocketWrapperLibrary
             msgOut += "\nConnection Time: " + ConnectionTime + 
                       "\nEmissions (C->S): " + socketEmissionToServerCount +
                       "\nReceptions (S->C): " + socketEmissionToClientCount;
-
-            // Increment
 
             return msgOut;
         }

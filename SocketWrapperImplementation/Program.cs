@@ -23,10 +23,6 @@ namespace SocketWrapperImplementation
             string input = "";
 
             SocketServer server = new SocketServer();
-            //server.Start(20100); // Done in the menu
-
-            //Console.WriteLine("Press enter to stop server."); // Can change later for debugging other features, like disconnect all client...
-            //Console.ReadLine();
 
             while (input != "10")
             {
@@ -99,7 +95,7 @@ namespace SocketWrapperImplementation
                 }
             }
 
-            //server.StopServer();
+            // Out of socket connection context
         }
 
         private static void ClientHandler()
@@ -145,8 +141,8 @@ namespace SocketWrapperImplementation
         public static void PrintServerMenu(bool isServerOn)
         {
             string msgOut = "";
+
             // ----- Menu Title -----
-            //msgOut += "\t-\t-\tSERVER MENU - Status: ";
             Console.Write("\t-\t-\tSERVER MENU - Status: ");
             
             if (isServerOn)
@@ -162,8 +158,8 @@ namespace SocketWrapperImplementation
 
             Console.WriteLine("\t-\t-");
                           
-            // ----- Menu Items -----
 
+            // ----- Menu Items -----
             msgOut += "\n1. Start Server" +
                       "\n2. Send Message to Clients" +
                       "\n3. Show clients" +
