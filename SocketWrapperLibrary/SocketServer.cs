@@ -39,7 +39,7 @@ namespace SocketWrapperLibrary
             
         }
 
-        public void SendMessageAsServer(byte[] bytes)
+        public void SendDataAsServer(byte[] bytes)
         {
             for (int i = 0; i < SocketConnections.Count; i++)
             {

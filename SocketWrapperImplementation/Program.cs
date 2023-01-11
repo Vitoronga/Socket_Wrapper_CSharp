@@ -41,7 +41,7 @@ namespace SocketWrapperImplementation
                     case "2":
                         Console.WriteLine("\nType your message: ");
                         string msgOut = Console.ReadLine();
-                        server.SendMessageAsServer(Encoding.ASCII.GetBytes($"[SERVER]: {msgOut}"));
+                        server.SendDataAsServer(Encoding.ASCII.GetBytes($"[SERVER]: {msgOut}"));
                         break;
 
 
