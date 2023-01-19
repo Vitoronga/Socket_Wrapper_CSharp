@@ -11,7 +11,7 @@ namespace SocketWrapperLibrary
         public static byte[] ConvertToByteArray(string text)
         {
             byte[] byteArray;
-            byteArray = new byte[text.Length * 2]; // Each char inside text seems to be converted to a hexadecimal rep of its bytes + a blank byte (ex. 78-00) (imprecise)
+            byteArray = new byte[text.Length * 2];
 
             int index = 0;
             for (int i = 0; i < text.Length; i++)

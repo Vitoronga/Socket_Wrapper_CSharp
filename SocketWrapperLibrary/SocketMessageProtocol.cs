@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace SocketWrapperLibrary
 {
@@ -15,8 +14,9 @@ namespace SocketWrapperLibrary
             Short = 1,
             Int = 2,
             Float = 3,
-            Char = 4,
-            String = 5,     // Protocol: 1 byte for signature ; 2 bytes (short) for char count, 2 byte per char
+            Double = 4,
+            Char = 5,
+            String = 6,     // Protocol: 1 byte for signature ; 2 bytes (short) for char count, 2 byte per char
             Bool = 15       // Protocol: First 4 bits ON (or 1) for signature ; pass 4 bool values
         }
 
@@ -63,7 +63,17 @@ namespace SocketWrapperLibrary
 
             return byteArray;
         }
-        
+
+        public static byte[] GetFormattedValue(double value)
+        {
+            byte[] byteArray = new byte[9]; // double size + data signature byte
+
+            byteArray[0] = (byte)DataSignatures.Double; // set first slot for data signature (so the signature comes first in every case)
+            BitConverter.GetBytes(value).CopyTo(byteArray, 1);
+
+            return byteArray;
+        }
+
         public static byte[] GetFormattedValue(char value)
         {
             byte[] byteArray = new byte[3]; // char size + data signature byte
