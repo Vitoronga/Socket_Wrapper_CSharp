@@ -8,7 +8,7 @@ namespace SocketWrapperLibrary
 {
     public interface ISocketMessage
     {
-        public byte Tag { get; set; }
+        public byte ClassId { get; }
 
         public byte[] FormatDataAsByteArray();
     }
