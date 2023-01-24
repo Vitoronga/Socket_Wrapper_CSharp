@@ -7,11 +7,6 @@ namespace SocketWrapperImplementation
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("[DEBUG] Expected output: " + SocketMessageProtocol.GetUnformattedBytes(SocketMessageProtocol.GetFormattedValue("Hello World!"))[0]);
-            Console.WriteLine("[DEBUG] Expected output: " + SocketMessageProtocol.GetUnformattedBytes(SocketMessageProtocol.GetFormattedValue("buuuug"))[0]);
-            Console.WriteLine("[DEBUG] Expected output: " + SocketMessageProtocol.GetUnformattedBytes(SocketMessageProtocol.GetFormattedValue("Olá 54"))[0]);
-            Console.WriteLine("[DEBUG] Expected output: " + SocketMessageProtocol.GetUnformattedBytes(SocketMessageProtocol.GetFormattedValue("ezzzzzzzzzzzzzzzzzz"))[0]);
-
             Console.WriteLine("Start as client (C) or server (S)?");
             string input = Console.ReadLine();
             if (input == "S")
@@ -129,7 +124,7 @@ namespace SocketWrapperImplementation
                     if (input == "!quit") break;
                     
                     bool success = client.SendData(new SocketMessage(input));
-                    Console.WriteLine("[DEBUG] Expected output: " + (string)SocketMessageProtocol.GetUnformattedBytes(SocketMessageProtocol.GetFormattedValue(input))[0]);
+                    //Console.WriteLine("[DEBUG] Expected output: " + (string)SocketMessageProtocol.GetUnformattedBytes(SocketMessageProtocol.GetFormattedValue(input))[0]);
 
                     if (!success) Console.WriteLine("<<< Failed to send data >>>");
 
