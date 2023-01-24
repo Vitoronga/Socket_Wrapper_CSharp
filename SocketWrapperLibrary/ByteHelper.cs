@@ -30,16 +30,16 @@ namespace SocketWrapperLibrary
 
         public static string ConvertToString(byte[] bytes)
         {
-            string text = "";
+            StringBuilder builder = new StringBuilder();
 
             Console.WriteLine(bytes.Length);
 
             for (int i = 0; i < bytes.Length; i += 2)
             {
-                text += BitConverter.ToChar(bytes, i);
+                builder.Append(BitConverter.ToChar(bytes, i));
             }
 
-            return text;
+            return builder.ToString();
         }
     }
 }
