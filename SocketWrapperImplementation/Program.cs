@@ -7,6 +7,11 @@ namespace SocketWrapperImplementation
     {
         static void Main(string[] args)
         {
+            Console.WriteLine("[DEBUG] Expected output: " + SocketMessageProtocol.GetUnformattedBytes(SocketMessageProtocol.GetFormattedValue("Hello World!"))[0]);
+            Console.WriteLine("[DEBUG] Expected output: " + SocketMessageProtocol.GetUnformattedBytes(SocketMessageProtocol.GetFormattedValue("buuuug"))[0]);
+            Console.WriteLine("[DEBUG] Expected output: " + SocketMessageProtocol.GetUnformattedBytes(SocketMessageProtocol.GetFormattedValue("Olá 54"))[0]);
+            Console.WriteLine("[DEBUG] Expected output: " + SocketMessageProtocol.GetUnformattedBytes(SocketMessageProtocol.GetFormattedValue("ezzzzzzzzzzzzzzzzzz"))[0]);
+
             Console.WriteLine("Start as client (C) or server (S)?");
             string input = Console.ReadLine();
             if (input == "S")
@@ -120,9 +125,14 @@ namespace SocketWrapperImplementation
                 {
                     Console.Write(">>> ");
                     input = Console.ReadLine();
+
                     if (input == "!quit") break;
-                    bool success = client.SendData(Encoding.ASCII.GetBytes(input));
+                    
+                    bool success = client.SendData(new SocketMessage(input));
+                    Console.WriteLine("[DEBUG] Expected output: " + (string)SocketMessageProtocol.GetUnformattedBytes(SocketMessageProtocol.GetFormattedValue(input))[0]);
+
                     if (!success) Console.WriteLine("<<< Failed to send data >>>");
+
                 } while (client.IsConnected());
             }
             else
@@ -131,7 +141,8 @@ namespace SocketWrapperImplementation
                 while (client.IsConnected())
                 {
                     if (!client.ReceiveData(out byte[] bytes)) continue;
-                    Console.WriteLine(Encoding.ASCII.GetString(bytes));
+                    SocketMessage message = SocketMessage.UnformatByteArrayToClass(bytes);
+                    Console.WriteLine(SocketMessageProtocol.GetUnformattedBytes(message.Data)[0]);
                 }
             }
 
