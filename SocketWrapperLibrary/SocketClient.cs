@@ -30,7 +30,7 @@ namespace SocketWrapperLibrary
             return true;
         }
 
-        public bool SendData(byte[] bytes)
+        internal bool SendData(byte[] bytes) // For exclusive use of the SocketServer 'relay' system
         {
             if (socket == null) return false;
 
@@ -38,6 +38,31 @@ namespace SocketWrapperLibrary
             {
                 socket.Send(bytes);
             } catch (Exception e)
+            {
+                Console.WriteLine("ERROR (SendData): " + e.Message);
+                return false;
+            }
+
+            return true;
+        }
+
+        public bool SendData(ISocketMessage message)
+        {
+            if (socket == null) return false;
+
+            try
+            {
+                byte[] data = message.FormatDataAsByteArray();
+                int totalSent = socket.Send(data);
+
+                while (totalSent < data.Length)
+                {
+                    byte[] currentArray = new byte[8192]; // 8192 is the current Socket packet/buffer length
+                    Array.Copy(data, totalSent, currentArray, 0, currentArray.Length);
+                    totalSent += socket.Send(currentArray);
+                }
+            }
+            catch (Exception e)
             {
                 Console.WriteLine("ERROR (SendData): " + e.Message);
                 return false;

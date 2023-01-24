@@ -120,9 +120,14 @@ namespace SocketWrapperImplementation
                 {
                     Console.Write(">>> ");
                     input = Console.ReadLine();
+
                     if (input == "!quit") break;
-                    bool success = client.SendData(Encoding.ASCII.GetBytes(input));
+                    
+                    bool success = client.SendData(new SocketMessage(input));
+                    //Console.WriteLine("[DEBUG] Expected output: " + (string)SocketMessageProtocol.GetUnformattedBytes(SocketMessageProtocol.GetFormattedValue(input))[0]);
+
                     if (!success) Console.WriteLine("<<< Failed to send data >>>");
+
                 } while (client.IsConnected());
             }
             else
@@ -131,7 +136,8 @@ namespace SocketWrapperImplementation
                 while (client.IsConnected())
                 {
                     if (!client.ReceiveData(out byte[] bytes)) continue;
-                    Console.WriteLine(Encoding.ASCII.GetString(bytes));
+                    SocketMessage message = SocketMessage.UnformatByteArrayToClass(bytes);
+                    Console.WriteLine(SocketMessageProtocol.GetUnformattedBytes(message.Data)[0]);
                 }
             }
 
