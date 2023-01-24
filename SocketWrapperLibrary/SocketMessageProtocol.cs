@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,12 +14,17 @@ namespace SocketWrapperLibrary
             Byte = 0,
             Short = 1,
             Int = 2,
-            Float = 3,
-            Double = 4,
-            Char = 5,
-            String = 6,     // Protocol: 1 byte for signature ; 2 bytes (short) for char count, 2 byte per char
-            Bool = 15       // Protocol: First 4 bits ON (or 1) for signature ; pass 4 bool values
+            Long = 3,
+            Float = 4,
+            Double = 5,
+            Char = 6,
+            String = 7,     // Protocol: 1 byte for signature ; 2 bytes (short) for char count, 2 byte per char
+            // Keep bool as the biggest value!
+            Bool = 15       // Protocol: First 4 bits ON (or 1) for signature ; pass 3 bool values + a delimiter bit
         }
+
+        internal static readonly Type STRING_LENGTH_LIMIT = typeof(short);
+        internal static readonly int BOOL_ARRAY_LENGTH_LIMIT = 3;
 
         //
         // Formatting methods:
@@ -49,6 +55,16 @@ namespace SocketWrapperLibrary
             byte[] byteArray = new byte[5]; // int size + data signature byte
 
             byteArray[0] = (byte)DataSignatures.Int; // set first slot for data signature (so the signature comes first in every case)
+            BitConverter.GetBytes(value).CopyTo(byteArray, 1);
+
+            return byteArray;
+        }
+
+        public static byte[] GetFormattedValue(long value)
+        {
+            byte[] byteArray = new byte[9]; // long size + data signature byte
+
+            byteArray[0] = (byte)DataSignatures.Long; // set first slot for data signature (so the signature comes first in every case)
             BitConverter.GetBytes(value).CopyTo(byteArray, 1);
 
             return byteArray;
@@ -86,20 +102,41 @@ namespace SocketWrapperLibrary
 
         public static byte[] GetFormattedValue(string value)
         {
-            byte[] byteArray = new byte[value.Length * 2 + 3]; // string size + (data signature byte + char count (short size))
+            if (value.Length > short.MaxValue) throw new Exception("ERROR: String size is too big (>32767)");
+            short length = (short)value.Length;
+
+            byte[] byteArray = new byte[length * 2 + 3]; // string size + (data signature byte + char count (short size))
 
             byteArray[0] = (byte)DataSignatures.String; // set first slot for data signature (so the signature comes first in every case)            
-            BitConverter.GetBytes(value.Length).CopyTo(byteArray, 1); // set second slot for char count
+            BitConverter.GetBytes(length).CopyTo(byteArray, 1); // set second slot for char count
             ByteHelper.ConvertToByteArray(value).CopyTo(byteArray, 3); // fourth slot start the actual value
 
             return byteArray;
         }
 
-        public static byte GetFormattedBoolValues(bool value1, bool value2 = false, bool value3 = false, bool value4 = false)
+        public static byte GetFormattedBoolValues(bool value1)
         {
             byte byteValue = (byte)SocketMessageProtocol.DataSignatures.Bool; // Adding data signature (for later recognition)
 
-            byteValue += (byte)((((value1 ? 1 : 0) << 3) + ((value2 ? 1 : 0) << 2) + ((value3 ? 1 : 0) << 1) + (value4 ? 1 : 0)) << 4);
+            byteValue += (byte)(((1 << 1) + ((value1 ? 1 : 0))) << 4);
+
+            return byteValue;
+        }
+
+        public static byte GetFormattedBoolValues(bool value1, bool value2)
+        {
+            byte byteValue = (byte)SocketMessageProtocol.DataSignatures.Bool; // Adding data signature (for later recognition)
+
+            byteValue += (byte)(((1 << 2) + ((value1 ? 1 : 0) << 1) + ((value2 ? 1 : 0))) << 4);
+
+            return byteValue;
+        }
+
+        public static byte GetFormattedBoolValues(bool value1, bool value2, bool value3)
+        {
+            byte byteValue = (byte)SocketMessageProtocol.DataSignatures.Bool; // Adding data signature (for later recognition)
+
+            byteValue += (byte)(((1 << 3) + ((value1 ? 1 : 0) << 2) + ((value2 ? 1 : 0) << 1) + ((value3 ? 1 : 0))) << 4);
 
             return byteValue;
         }
@@ -108,17 +145,17 @@ namespace SocketWrapperLibrary
         {
             byte[] byteArray;
 
-            if (boolArray.Length > 4)
+            if (boolArray.Length > BOOL_ARRAY_LENGTH_LIMIT)
             {
                 int length = boolArray.Length;
-                int subArrayAmount = length % 4 + (length % 4 == 0 ? 0 : 1);
+                int subArrayAmount = length % BOOL_ARRAY_LENGTH_LIMIT + (length % BOOL_ARRAY_LENGTH_LIMIT == 0 ? 0 : 1);
                 byteArray = new byte[subArrayAmount];
 
                 for (int i = 0; i < subArrayAmount; i++)
                 {
-                    bool[] currentArray = new bool[4];
-                    boolArray.CopyTo(currentArray, 4 * i);
-                    GetBoolArrayAsByteArray(currentArray).CopyTo(byteArray, 4 * i);
+                    bool[] currentArray = new bool[BOOL_ARRAY_LENGTH_LIMIT];
+                    Array.Copy(boolArray, BOOL_ARRAY_LENGTH_LIMIT * i, currentArray, 0, currentArray.Length);
+                    GetBoolArrayAsByteArray(currentArray).CopyTo(byteArray, BOOL_ARRAY_LENGTH_LIMIT * i);
                 }
             } 
             else
@@ -138,10 +175,6 @@ namespace SocketWrapperLibrary
                     case 3:
                         byteValue = GetFormattedBoolValues(boolArray[0], boolArray[1], boolArray[2]);
                         break;
-
-                    case 4:
-                        byteValue = GetFormattedBoolValues(boolArray[0], boolArray[1], boolArray[2], boolArray[3]);
-                        break;
                 }
 
                 byteArray = new byte[] { byteValue };
@@ -151,9 +184,91 @@ namespace SocketWrapperLibrary
         }
     
         //
-        // TODO: Unformatting methods:
+        // Unformatting methods:
         //
 
-        // Methods goes here
+        public static List<object> GetUnformattedBytes(byte[] data)
+        {
+            List<object> values = new List<object>();
+
+            for (int i = 0; i < data.Length; ) // Keep no increment
+            {
+                DataSignatures sig = (data[i] >= (byte)DataSignatures.Bool ? DataSignatures.Bool : (DataSignatures)data[i]);
+                i++;
+
+                switch (sig)
+                {
+                    case (DataSignatures.Byte):
+                        values.Add(data[i++]);
+                        break;
+
+                    case (DataSignatures.Short):
+                        values.Add(BitConverter.ToInt16(data, i));
+                        i += 2;
+                        break;
+
+                    case (DataSignatures.Int):
+                        values.Add(BitConverter.ToInt32(data, i));
+                        i += 4;
+                        break;
+
+                    case (DataSignatures.Long):
+                        values.Add(BitConverter.ToInt64(data, i));
+                        i += 8;
+                        break;
+
+                    case (DataSignatures.Float):
+                        values.Add(BitConverter.ToSingle(data, i));
+                        i += 4;
+                        break;
+
+                    case (DataSignatures.Double):
+                        values.Add(BitConverter.ToDouble(data, i));
+                        i += 8;
+                        break;
+
+                    case (DataSignatures.Char):
+                        values.Add(BitConverter.ToChar(data, i));
+                        i += 2;
+                        break;
+
+                    case (DataSignatures.String):
+                        short charAmount = BitConverter.ToInt16(data, i);
+                        i += 2;
+                        StringBuilder builder = new StringBuilder();
+
+                        for (int j = 0; j < charAmount; j++)
+                        {
+                            builder.Append(BitConverter.ToChar(data, i));
+                            i += 2;
+                        }
+
+                        values.Add(builder.ToString());
+
+                        break;
+
+                    case (DataSignatures.Bool):
+                        byte bools = (byte)(data[i] >> 4);
+                        BitArray bitArray = new BitArray(new byte[] { bools });
+
+                        bool foundDelimiter = false;
+                        for (int j = BOOL_ARRAY_LENGTH_LIMIT; j >= 0; j--)
+                        {
+                            if (!foundDelimiter) foundDelimiter = bitArray[j]; // As bitArray stores a bunch of boolean values, and I want to find the first 1 bit, just store the value until it finds it.
+                            else values.Add(bitArray[j]);
+                        }
+
+                        i++;
+
+                        break;
+
+                    default:
+                        Console.WriteLine($"Could not identify the type of following byte: { data[i] }");
+                        break;
+                }
+            }
+
+            return values;
+        }
     }
 }
