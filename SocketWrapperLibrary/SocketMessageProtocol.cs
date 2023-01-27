@@ -194,7 +194,7 @@ namespace SocketWrapperLibrary
             for (int i = 0; i < data.Length; ) // Keep no increment
             {
                 DataSignatures sig = (data[i] >= (byte)DataSignatures.Bool ? DataSignatures.Bool : (DataSignatures)data[i]);
-                i++;
+                if (sig != DataSignatures.Bool) i++;
 
                 switch (sig)
                 {
