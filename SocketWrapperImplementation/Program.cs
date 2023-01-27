@@ -1,4 +1,5 @@
 ﻿using SocketWrapperLibrary;
+using System.Diagnostics;
 using System.Text;
 
 namespace SocketWrapperImplementation
@@ -115,6 +116,9 @@ namespace SocketWrapperImplementation
             if (input.ToUpper().Equals("S"))
             {
                 input = "Test";
+
+                //DoDebugSession(client);
+
                 Console.WriteLine("Sender mode: Type your message after the '>>>', or !quit to disconnect.");
                 do
                 {
@@ -176,5 +180,121 @@ namespace SocketWrapperImplementation
             Console.WriteLine(msgOut);
         }
 
+        private static void DoDebugSession(SocketClient client)
+        {
+            Console.WriteLine("[DEBUG] Doing stress test:");
+
+            for (int i = 0; i < 3; i++)
+            {
+                string bigText = Return500bytesText(1);
+                client.SendData(new SocketMessage(bigText));
+            }
+
+            Stopwatch stopwatch = new Stopwatch();
+
+            Console.WriteLine("Sending 30kb of string: ");
+
+            stopwatch.Start();
+            string bigText2 = Return500bytesText(60);
+            client.SendData(new SocketMessage(bigText2));
+            stopwatch.Stop();
+            Console.WriteLine($"Time elapsed: {stopwatch.Elapsed.TotalMilliseconds}ms");
+            stopwatch.Reset();
+
+            Console.WriteLine("Testing all types of data:");
+            
+            // Byte
+            byte v_byte = 102;
+            stopwatch.Start();
+            object o_byte = (byte)SocketMessageProtocol.GetUnformattedBytes(SocketMessageProtocol.GetFormattedValue(v_byte))[0];
+            stopwatch.Stop();
+            Console.WriteLine($"[INPUT] {v_byte} \n[OUTPUT] {o_byte} \nTime Elapsed: {stopwatch.Elapsed.TotalMilliseconds}ms");
+            stopwatch.Reset();
+
+            // Short
+            short v_short = 30088;
+            stopwatch.Start();
+            object o_short = SocketMessageProtocol.GetUnformattedBytes(SocketMessageProtocol.GetFormattedValue(v_short))[0];
+            stopwatch.Stop();
+            Console.WriteLine($"[INPUT] {v_short} \n[OUTPUT] {o_short} \nTime Elapsed: {stopwatch.Elapsed.TotalMilliseconds}ms");
+            stopwatch.Reset();
+
+            // Int
+            int v_int = 12003004;
+            stopwatch.Start();
+            object o_int = SocketMessageProtocol.GetUnformattedBytes(SocketMessageProtocol.GetFormattedValue(v_int))[0];
+            stopwatch.Stop();
+            Console.WriteLine($"[INPUT] {v_int} \n[OUTPUT] {o_int} \nTime Elapsed: {stopwatch.Elapsed.TotalMilliseconds}ms");
+            stopwatch.Reset();
+
+            // Long
+            long v_long = 99;
+            stopwatch.Start();
+            object o_long = SocketMessageProtocol.GetUnformattedBytes(SocketMessageProtocol.GetFormattedValue(v_long))[0];
+            stopwatch.Stop();
+            Console.WriteLine($"[INPUT] {v_long} \n[OUTPUT] {o_long} \nTime Elapsed: {stopwatch.Elapsed.TotalMilliseconds}ms");
+            stopwatch.Reset();
+
+            // Float
+            float v_float = 532.02384f;
+            stopwatch.Start();
+            object o_float = SocketMessageProtocol.GetUnformattedBytes(SocketMessageProtocol.GetFormattedValue(v_float))[0];
+            stopwatch.Stop();
+            Console.WriteLine($"[INPUT] {v_float} \n[OUTPUT] {o_float} \nTime Elapsed: {stopwatch.Elapsed.TotalMilliseconds}ms");
+            stopwatch.Reset();
+
+            // Double
+            double v_double = 0.928382323123;
+            stopwatch.Start();
+            object o_double = SocketMessageProtocol.GetUnformattedBytes(SocketMessageProtocol.GetFormattedValue(v_double))[0];
+            stopwatch.Stop();
+            Console.WriteLine($"[INPUT] {v_double} \n[OUTPUT] {o_double} \nTime Elapsed: {stopwatch.Elapsed.TotalMilliseconds}ms");
+            stopwatch.Reset();
+
+            // Char
+            char v_char = 'R';
+            stopwatch.Start();
+            object o_char = SocketMessageProtocol.GetUnformattedBytes(SocketMessageProtocol.GetFormattedValue(v_char))[0];
+            stopwatch.Stop();
+            Console.WriteLine($"[INPUT] {v_char} \n[OUTPUT] {o_char} \nTime Elapsed: {stopwatch.Elapsed.TotalMilliseconds}ms");
+            stopwatch.Reset();
+
+            // String
+            string v_string = "Hello world!";
+            stopwatch.Start();
+            object o_string = SocketMessageProtocol.GetUnformattedBytes(SocketMessageProtocol.GetFormattedValue(v_string))[0];
+            stopwatch.Stop();
+            Console.WriteLine($"[INPUT] {v_string} \n[OUTPUT] {o_string} \nTime Elapsed: {stopwatch.Elapsed.TotalMilliseconds}ms");
+            stopwatch.Reset();
+
+            // Bool
+            bool v_bool = true;
+            stopwatch.Start();
+            object o_bool = SocketMessageProtocol.GetUnformattedBytes(new byte[] { SocketMessageProtocol.GetFormattedBoolValues(v_bool) })[0];
+            stopwatch.Stop();
+            Console.WriteLine($"[INPUT] {v_bool} \n[OUTPUT] {o_bool} \nTime Elapsed: {stopwatch.Elapsed.TotalMilliseconds}ms");
+            stopwatch.Reset();
+
+            // Bools
+            bool[] v_bools = new bool[] { true, false, false };
+            stopwatch.Start();
+            object o_bools = SocketMessageProtocol.GetUnformattedBytes(SocketMessageProtocol.GetBoolArrayAsByteArray(v_bools))[0];
+            stopwatch.Stop();
+            Console.WriteLine($"[INPUT] {v_bools} \n[OUTPUT] {o_bools} \nTime Elapsed: {stopwatch.Elapsed.TotalMilliseconds}ms");
+            stopwatch.Reset();
+        }
+
+        private static string Return500bytesText(int multiplier = 1)
+        {
+            const string lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque mollis gravida velit a feugiat. Vestibulum accumsan, lacus a pretium elementum, turpis lectus rhoncus tortor, ut faucibus lacus neque ac est. Vestibulum ac auctor dolor. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. In quis eros quis purus lobortis finibus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce eget ornare ipsum, at imperdiet magna. Suspendisse efficitur.";
+            StringBuilder builder = new StringBuilder(lorem);
+
+            for (int i = 0; i < multiplier; i++)
+            {
+                builder.AppendLine(lorem);
+            }
+
+            return builder.ToString();
+        }
     }
 }
