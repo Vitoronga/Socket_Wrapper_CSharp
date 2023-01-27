@@ -1,4 +1,6 @@
-﻿using System.Net.Sockets;
+﻿using System;
+using System.Diagnostics;
+using System.Net.Sockets;
 
 namespace SocketWrapperLibrary
 {
@@ -30,13 +32,25 @@ namespace SocketWrapperLibrary
             return true;
         }
 
-        internal bool SendData(byte[] bytes) // For exclusive use of the SocketServer 'relay' system
+        internal bool SendData(byte[] bytes) // Main Method - for normal transmition and directly accessible only to server relays
         {
             if (socket == null) return false;
 
+            // Adding message length inside itself
+            byte[] finalBytes = new byte[bytes.Length + 4];
+            BitConverter.GetBytes(bytes.Length).CopyTo(finalBytes, 0);
+            Array.Copy(bytes, 0, finalBytes, 4, bytes.Length);
+
             try
             {
-                socket.Send(bytes);
+                int totalSent = socket.Send(finalBytes);
+
+                while (totalSent < finalBytes.Length)
+                {
+                    byte[] currentArray = new byte[8192]; // 8192 is the current Socket packet/buffer length
+                    Array.Copy(finalBytes, totalSent, currentArray, 0, currentArray.Length);
+                    totalSent += socket.Send(currentArray);
+                }
             } catch (Exception e)
             {
                 Console.WriteLine("ERROR (SendData): " + e.Message);
@@ -50,25 +64,7 @@ namespace SocketWrapperLibrary
         {
             if (socket == null) return false;
 
-            try
-            {
-                byte[] data = message.FormatDataAsByteArray();
-                int totalSent = socket.Send(data);
-
-                while (totalSent < data.Length)
-                {
-                    byte[] currentArray = new byte[8192]; // 8192 is the current Socket packet/buffer length
-                    Array.Copy(data, totalSent, currentArray, 0, currentArray.Length);
-                    totalSent += socket.Send(currentArray);
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("ERROR (SendData): " + e.Message);
-                return false;
-            }
-
-            return true;
+            return SendData(message.FormatDataAsByteArray());
         }
 
         public bool ReceiveData(out byte[] formattedBytes)
@@ -80,12 +76,24 @@ namespace SocketWrapperLibrary
             try
             {
                 byte[] receivedBytes = new byte[socket.ReceiveBufferSize];
-                int byteAmount = socket.Receive(receivedBytes);
-                formattedBytes = new byte[byteAmount];
+                int totalBytesReceived = socket.Receive(receivedBytes) - 4;
+                int totalBytesToBeReceived = BitConverter.ToInt32(receivedBytes, 0);
 
-                for (int i = 0; i < formattedBytes.Length; i++)
+                formattedBytes = new byte[totalBytesToBeReceived];
+
+                if (totalBytesReceived < totalBytesToBeReceived)
                 {
-                    formattedBytes[i] = receivedBytes[i];
+                    Array.Copy(receivedBytes, 4, formattedBytes, 0, totalBytesReceived);
+
+                    while (totalBytesReceived < totalBytesToBeReceived)
+                    {
+                        int currentReceived = socket.Receive(receivedBytes);
+                        Array.Copy(receivedBytes, 0, formattedBytes, totalBytesReceived, currentReceived);
+                        totalBytesReceived += currentReceived;
+                    }
+                } else
+                {
+                    Array.Copy(receivedBytes, 4, formattedBytes, 0, totalBytesToBeReceived);
                 }
 
             } catch (Exception e)
